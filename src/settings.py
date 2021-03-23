@@ -94,7 +94,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'e$!nl+*g*q&amp;4%2+3p0+!entstaqjs-cnh)(eppb-75x%_@g31^'
+SECRET_KEY = ''
 
 ROOT_URLCONF = 'urls'
 

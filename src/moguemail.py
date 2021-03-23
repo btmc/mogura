@@ -11,9 +11,9 @@ from email.MIMEText import MIMEText
 
 class MoguraEmail:
 	mail_server = '127.0.0.1'
-	sender_email = 'noreply@gazprom-media.tech'
-	replyto_email = 'noreply@gazprom-media.tech'
-	mail_from_email = 'noreply@gazprom-media.tech'
+	sender_email = 'no@reply'
+	replyto_email = 'no@reply'
+	mail_from_email = 'no@reply'
 
         attachment_size_limit = 20 * 1024 * 1024
 
