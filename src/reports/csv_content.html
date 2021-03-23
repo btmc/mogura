@@ -1,0 +1,16 @@
+<h3>{% autoescape off %}{{title}}{% endautoescape %}</h3>
+<a style="margin-right:10px" href="{% url 'reports.views.csvd' token=token %}">Скачать CSV</a>
+{% if xls %}<a style="margin-right:10px" href="{% url 'reports.views.xlsd' token=token %}">Скачать XLSX</a>{% endif %}
+<a style="margin-right:10px" href="javascript:;" onclick="window.history.replaceState({}, '', '{% url 'reports.views.csvs' token=token %}');")>Прямая ссылка</a>
+{% if user.id %}<a id="sql_href" style="margin-right:10px" href="javascript:;" onclick="toggle_sql()">SQL</a>{% endif %}
+<a style="margin-right:10px" href="{% url 'reports.views.calcv' item_id=item_id token=token %}">Пересчитать</a>
+{% if user.id %}<a id="email_href" style="margin-right:10px" href="javascript:;" onclick="toggle_email()">Email</a>{% endif %}
+<input id="email" type="text" style="margin-right:10px; display: none;" value="{{user.email}}"/>
+<a id="email_send" style="margin-right:10px; display: none;" href="javascript:;" onclick="send_email()">Отправить</a>
+<pre id="email_status" style="display: inline;"></pre>
+<div id="sql" style="display: none; background-color:#F2F7FA; line-height: 100%"></div>
+<div id="csv_table">
+{% autoescape off %}
+        {{ content }}
+{% endautoescape %}
+</div>

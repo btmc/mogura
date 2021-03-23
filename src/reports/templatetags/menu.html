@@ -1,0 +1,96 @@
+<script>
+	var hier = [];
+
+{% for menu_item in menu_list %}
+	hier[{{menu_item.id}}] = ('{{menu_item.parent_id}}' == 'None') ? 0 : {{menu_item.parent_id}};
+{% endfor %}
+
+	var items = [];
+	var priority = [];
+
+{% for menu_item in menu_list %}
+	items[{{menu_item.id}}] = '<li id="' + {{menu_item.id}}+ '" ' + {% if menu_item.id == item_id %}'style="font-weight:bold; background-color:#EBECF2">'{% else %}'>'{% endif %} + '<a id="a_' + {{menu_item.id}} + '" href="' + "{% url 'reports.views.calcv' menu_item.id %}" + '">' + '{{menu_item.title_menu}}' + '</a>' + {% if menu_item.id == item_id %}''{% else %}''{% endif %} +'<div id="div_' + {{menu_item.id}}+ '" style="display: none;"></div></li>';
+
+	priority [{{menu_item.id}}] = {{menu_item.priority}};
+{% endfor %}
+
+function hide_all() {
+	for (key in items) {
+		$("#div_" + key).hide(400);
+	}
+}
+
+function show_current_item(item_id, latency) {
+	if (item_id == 0) return;
+	if (item_id == undefined) return;
+	$("#div_" + item_id).show(latency);
+	show_current_item(hier[item_id]);
+}
+
+function update_div_tree(item_id) {
+        if (hier[item_id] == undefined) return;
+
+	if ($("#div_" + hier[item_id]).length == 0) {
+		update_div_tree(hier[item_id]);
+	}
+
+	if ($("#div_" + hier[item_id]).find($("#div_" + item_id)).length == 0) {
+		if ($("#div_" + hier[item_id]).children('ul').length == 0) {
+			$("#div_" + hier[item_id]).html('<ul></ul>');
+		}
+		$("#div_" + hier[item_id]).children('ul').append(items[item_id]);
+	} 
+}
+
+function get_tree(item_id) {
+	if (item_id == 0) return Array(1);
+
+	item_chain = get_tree(hier[item_id]);
+	item_chain[item_id] = 1;
+
+	return item_chain;
+}
+
+function hide_except(item_chain) {
+	for (key in items) {
+		if (!item_chain[key]) {
+			$("#div_" + key).hide(400);
+		}
+	}
+}
+
+$(function() {
+	for (key in items) {
+		update_div_tree(key);
+	}
+
+	items[0] = 0;
+	for (key in items) {
+		$("#div_" + key + " > ul").html($("#div_" + key + " > ul > li").sort(function(a, b){return priority[a.id] >= priority[b.id] ? 1 : -1;}));
+	}
+	delete items[0];
+
+	{% for menu_item in menu_list %}	
+		{% if not menu_item.sql %}
+		$("#a_{{menu_item.id}}").click(function(event) {
+			event.preventDefault();
+
+			if ($("#div_{{menu_item.id}}").is(":visible")) {
+				hide_except(get_tree('{{menu_item.parent_id}}' == 'None' ? 0 : {{menu_item.parent_id}}));
+				show_current_item('{{menu_item.parent_id}}' == 'None' ? 0 : {{menu_item.parent_id}}, 400);
+			}
+			else {
+
+				hide_except(get_tree('{{menu_item.id}}'));
+				show_current_item({{menu_item.id}}, 400);
+			}
+		})
+		{% endif %}
+
+	{% endfor %} 
+
+	show_current_item({{item_id}}, 0);	
+});
+</script>
+
+<div id="div_0"></div>

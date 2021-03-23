@@ -1,0 +1,7 @@
+{% block header %}
+{% if user.id != None %}
+Hi, {{user}}!     <a href="{% url 'auth_logout' %}">Выйти</a>
+{% else %}
+<a href="{% url 'django.contrib.auth.views.login' %}">Войти</a>
+{% endif %}
+{% endblock %}

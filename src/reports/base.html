@@ -1,0 +1,50 @@
+{% load templates %}
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Mogura{% if title_header %} - {{title_header}} {% elif title %} - {{title}} {% endif %}</title>
+        <link rel="shortcut icon" type="image/x-icon" href="/static/favicon.ico"/>
+        <link rel="stylesheet" type="text/css" href="/static/z/default.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/z/color.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/z/icon.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/z/blocks.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/z/screen.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/z/jquery-ui.css"/>
+	<script type="text/javascript" src="/static/jquery.js"></script>
+	<script type="text/javascript" src="/static/jquery.color-2.1.2.js"></script>
+	<script type="text/javascript" src="/static/jquery.migrate-1.2.1.js"></script>
+	<script type="text/javascript" src="/static/mottie-tablesorter/js/jquery.tablesorter.js"></script>
+        <link rel="stylesheet" type="text/css" href="/static/mottie-tablesorter/css/theme.default.css"/>
+	<link rel="stylesheet" type="text/css" href="/static/style.css"/>
+</head>
+<body class="classic">
+<script>
+	$(function(){
+		$("#up_button").offset({left: $("#sidebar").width() - $("#up_button").width()});
+
+                $(window).on('scroll', function() {
+			if (window.pageYOffset > window.innerHeight && ! $("#up_button").is(":visible")) {
+				$("#up_button").fadeIn(600);
+			}  
+			if (window.pageYOffset <= window.innerHeight && $("#up_button").is(":visible")) {
+				$("#up_button").fadeOut(600);
+			}  
+		});
+
+		$("#up_button_submit").click(function(){
+			window.scrollTo(0,0);
+			$("#up_button").fadeOut(600);		
+		});
+	});
+</script>
+<!--<h2><center><font color="red" weight="bold">Апгрейд сайта. Некоторые отчеты могут не приходить или возвращать ошибку.</font></center></h2>-->
+<table style="max-width:100%; height:100%;">
+<tr><td colspan="2" style="height:1%"><div class="ui-widget-header">{% header user=user %}</div></td></tr>
+<tr><td style="width:1%; vertical-align:top; background-color:#DDDDDD; position:relative; z-index:100;"><div id="sidebar">{% menu user=user item_id=item_id%}</div>
+<div id="up_button" style="display:none; position:fixed; bottom:0;"><input id="up_button_submit" type="submit" value="Наверх"/></div></td>
+<td style="max-width:1px;vertical-align:top;"><div id="csv_block" style="padding-left: 5px; padding-top:2px; overflow: auto;">
+{% block content %}
+{% endblock %}
+</div></td></tr>
+</table>
+</body></html>

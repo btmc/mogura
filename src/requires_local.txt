@@ -1,0 +1,2 @@
+resource-loader==0.1
+mysql-connector-python-django-mod==8.0.5-0.1

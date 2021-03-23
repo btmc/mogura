@@ -1,0 +1,79 @@
+<script type="text/javascript">
+	$(function(){
+
+	var disableColor = "#DDEEDD";
+	var enableColor = "#FFFFFF";
+	var transitionTime = 200;
+
+ 	$('form').bind('submit', function() {
+        	$(this).find(':input').removeAttr('disabled');
+    	});
+
+	{% for key, fields in conflicts.items %}
+
+        var disable_conflicting_{{key}} = function() {
+                {% for field, value in fields.items %}
+                        $("#id_{{field}}").attr("disabled", "disabled");
+                        $("#id_{{field}}").animate({backgroundColor: disableColor}, transitionTime);
+
+                        if ($("#id_{{field}}").is(":checkbox")) {
+                                if ("{{value}}" == "") {
+                                        $("#id_{{field}}").removeAttr("checked");
+                                } else {
+                                        $("#id_{{field}}").prop("checked", "checked");
+                                }
+                        } else {
+                                $("#id_{{field}}").val("{{value}}");
+                        }
+                {% endfor %}
+        }
+
+        var enable_conflicting_{{key}} = function() {
+                {% for field, value in fields.items %}
+                        $("#id_{{field}}").removeAttr("disabled");
+                        $("#id_{{field}}").animate({backgroundColor: enableColor}, transitionTime);
+                {% endfor %}
+        }
+
+	if ($("#id_{{key}}").is(":checkbox")){
+                var check_conflicting_{{key}} = function() {
+			if ($(this).is(":checked")) {
+                                disable_conflicting_{{key}}();
+			} else {
+                                enable_conflicting_{{key}}();
+			}
+                }
+
+		$("#id_{{key}}").change(check_conflicting_{{key}})
+
+                $("#id_{{key}}").trigger('change')
+
+	} else if ($("#id_{{key}}").is(":text")) {
+                var check_conflicting_{{key}} = function() {
+			if ($(this).val() != "") {
+                                disable_conflicting_{{key}}();
+			} else {
+                                enable_conflicting_{{key}}();
+			}
+                }
+
+		$("#id_{{key}}").keyup(check_conflicting_{{key}})
+
+                $("#id_{{key}}").trigger('keyup')
+	} else {
+                var check_conflicting_{{key}} = function() {
+			if ($(this).val() != "") {
+                                disable_conflicting_{{key}}();
+			} else {
+                                enable_conflicting_{{key}}();
+			}
+                }
+
+		$("#id_{{key}}").change(check_conflicting_{{key}})
+
+                $("#id_{{key}}").trigger('change')
+	}
+
+	{% endfor %}
+	})
+</script>

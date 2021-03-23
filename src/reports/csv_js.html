@@ -1,0 +1,271 @@
+<script>
+                var report_offset = 0;
+                var active_table_element = undefined;
+                var header_height = 0;
+                var table_left_offset = undefined;
+
+                var toggle_email = function() {
+                        $("#email").toggle();
+                        $("#email_send").toggle();
+                        $("#email").focus();
+                        $("#email").val($("#email").val());
+                }
+
+                var send_email = function() {
+                        $.post("{% url 'reports.views.sendemail' token=token %}", $("#email").val(), send_email_success)
+                        $("#email").toggle();
+                        $("#email_send").toggle();
+                }
+
+                var send_email_success = function() {
+                        $("#email_status").html('<font color="green"><b>OK</b></font>');
+                        $("#email_status").show();
+                        $("#email_status").fadeOut(2000);
+                }
+
+                var toggle_sql = function() {
+                        if ($("#sql").is(':empty')) {
+                                $("#sql").load("{% url 'reports.views.sql' token=token %}");
+                        }
+                        $("#csv_table").toggle();
+                        $("#sql").toggle();
+                        $("#sql_href").html(($("#sql_href").html() == 'SQL') ? 'Данные' : 'SQL');
+                }
+
+                var merge_headers = function() {
+                        $("tr.header td").each(
+                                function(index){
+                                        var current_element = this;
+                                        $("tr.header td").each(
+                                                function(index){
+                                                        if (
+                                                                this != current_element
+                                                        &&
+                                                                $(this).offset().left == $(current_element).offset().left
+                                                        &&
+                                                                $(this).width() == $(current_element).width()
+                                                        &&
+                                                                $(this).offset().top >= ($(current_element).offset().top + $(current_element).height())
+                                                        &&
+                                                                $(this).offset().top < ($(current_element).offset().top + $(current_element).height() * 2)
+                                                        &&
+                                                                (
+                                                                        $(this).html() == $(current_element).html()
+                                                                ||
+                                                                        $(this).html() == ''
+                                                                )
+                                                        ) {
+                                                                $(current_element).prop('rowspan', $(current_element).prop('rowspan') + 1);
+                                                                $(current_element).css('text-align', 'center');
+                                                                $(current_element).css('vertical-align', 'bottom');
+                                                                $(this).remove();
+                                                        }
+                                                }
+                                        )
+                                }
+                        );
+                }
+                
+                var load_chunk =
+                        function() {
+                                if ($(document).height() <= (window.pageYOffset + window.innerHeight)){
+                                        $.ajax({
+                                                   type: "GET",
+                                                   url: "{% url 'reports.views.csvr' token=token limit=chunk_size %}" + '/' + (report_offset + {{chunk_size}}),
+                                                   async: false,
+                                                   success: function(msg){
+                                                             if (/<tr/.exec(msg) === null) {
+                                                                $(window).unbind('scroll', load_chunk);
+                                                             }
+
+                                                             var html = $("#csv_table").html().replace(new RegExp('</tbody></table>(?!.*<table)', 'gi'), '');
+                                                             var msg = msg.replace(new RegExp('^<tbody>'), '');
+
+                                                             $("#csv_table").html(html + msg);
+
+                                                             merge_headers();
+
+                                                             $(".tableinfo thead[style*='position: fixed']").remove();
+                                                             $("#float_header_replacement").removeAttr('id');
+
+                                                             $(".tableinfo").tablesorter({
+                                                                     widgets: ['zebra'],
+                                                                     widgetOptions: {
+                                                                            zebra: ['even_row', 'odd_row']
+                                                                     }
+                                                             });
+
+                                                             report_offset += {{chunk_size}};
+
+                                                             set_hover_header();
+                                                   }
+                                        });
+                                }
+                        } 
+                        
+                var move_hover_header =
+                        function() {
+                                if (active_table_element == undefined){
+                                        return;
+                                }  
+
+				var active_table = $(active_table_element);
+
+                                elem_list = active_table.find("thead");
+                                var elem_list_min_left = undefined;
+                                var elem_list_div_min_left = undefined;
+
+                                elem_list.find('td').each(function(index){
+                                        if (elem_list_min_left != undefined){
+                                                if (elem_list_min_left > $(this).position().left){
+                                                        elem_list_min_left = $(this).position().left;
+                                                }
+                                        }
+                                        else{
+                                                elem_list_min_left = $(this).position().left;
+                                        }
+                                });
+                                elem_list.find('div').each(function(index){
+                                        if (elem_list_div_min_left != undefined){
+                                                if (elem_list_div_min_left > $(this).position().left){
+                                                        elem_list_div_min_left = $(this).position().left;
+                                                }
+                                        }
+                                        else{
+                                                elem_list_div_min_left = $(this).position().left;
+                                        }
+                                });
+
+                                elem_list.find('td').each(function(index){
+                                        $(this).css('left', $(this).position().left - table_left_offset + active_table.offset().left);
+                                });
+                                elem_list.find('div').each(function(index){
+                                        $(this).css('left', $(this).position().left - table_left_offset + active_table.offset().left);
+                                });
+
+                                table_left_offset = active_table.offset().left;
+                        }   
+                        
+                var set_hover_header =
+                        function() {
+                                $(".tableinfo").each(function(){
+                                        if ($(this).offset().top < window.pageYOffset && $(this).offset().top + $(this).height() > window.pageYOffset + header_height){
+                                                if (active_table_element != this){
+                                                        $(".tableinfo [style*='position: fixed']").css('position', 'static');
+                                                        $("#float_header_replacement").remove();
+                                                        active_table_element = this;
+                                                }
+                                        }
+
+                                });
+
+                                if (active_table_element == undefined){
+                                        return;
+                                }
+
+				var active_table = $(active_table_element);
+
+                                if ($(".tableinfo").find("thead[style*='position: fixed']").length > 0){
+                                        if (    active_table.offset().top > window.pageYOffset
+                                        ||
+                                                (       active_table.offset().top < window.pageYOffset
+                                                &&
+                                                        active_table.offset().top + active_table.height() < window.pageYOffset + header_height
+                                                )
+                                        ){
+                                                $(".tableinfo [style*='position: fixed']").css('position', 'static');
+                                                $("#float_header_replacement").remove();
+                                                active_table_element = undefined;
+                                        }
+                                        return;
+                                }    
+                                
+                                if (active_table.offset().top < window.pageYOffset) {
+
+
+                                        table_left_offset = active_table.offset().left;
+
+                                        elem_list = active_table.find("thead");
+                                        elem_list_clone = active_table.find("thead").clone({withDataAndEvents: true, deepWithDataAndEvents: true});
+                                        elem_list_clone.prop('id', 'float_header_replacement');
+
+                                        var elem_list_params = [];
+                                        var elem_list_min_top = undefined;
+                                        var elem_list_div_params = [];
+                                        var elem_list_div_min_top = undefined;
+
+                                        elem_list.find('td').each(function(index){
+                                                if (elem_list_min_top != undefined){
+                                                        if (elem_list_min_top > $(this).position().top){
+                                                                elem_list_min_top = $(this).position().top;
+                                                        }
+                                                }
+                                                else{
+                                                        elem_list_min_top = $(this).position().top;
+                                                }
+                                        });
+
+                                        elem_list.find('td').each(function(index){
+                                                elem_list_params[index] = {};
+                                                elem_list_params[index].top = $(this).position().top - elem_list_min_top;
+                                                elem_list_params[index].left = $(this).position().left - ($.browser.mozilla ? 1 : 0);
+                                                elem_list_params[index].width = $(this).width() + ($.browser.webkit ? 1 : 0);
+                                                elem_list_params[index].height = $(this).height() + ($.browser.webkit ? 1 : 0);
+                                        });
+
+                                        elem_list.find('div').each(function(index){
+                                                elem_list_div_params[index] = {};
+                                                elem_list_div_params[index].top = $(this).position().top - elem_list_min_top;
+                                                elem_list_div_params[index].left = $(this).position().left;
+                                                elem_list_div_params[index].width = $(this).width();
+                                                elem_list_div_params[index].height = $(this).height();
+                                        }); 
+                                        
+                                        elem_list.find('td').each(function(index){
+                                                $(this).css('top', elem_list_params[index].top);
+                                                $(this).css('left', elem_list_params[index].left);
+                                                $(this).css('width', elem_list_params[index].width);
+                                                $(this).css('height', elem_list_params[index].height);
+                                                $(this).css('position', 'fixed');
+                                                $(this).css('overflow', 'hidden');
+                                                $(this).css('z-index', '2');
+                                        });
+
+                                        elem_list.find('div').each(function(index){
+                                                $(this).css('top', elem_list_div_params[index].top);
+                                                $(this).css('left', elem_list_div_params[index].left);
+                                                $(this).css('width', elem_list_div_params[index].width);
+                                                $(this).css('height', elem_list_div_params[index].height);
+                                                $(this).css('position', 'fixed');
+                                                $(this).css('overflow', 'hidden');
+                                                $(this).css('z-index', '2');
+                                        });
+
+                                        elem_list.each(function(index){
+						$(this).css('top', '0px');
+                                                $(this).css('position', 'fixed');
+                                                $(this).css('overflow', 'hidden');
+                                                $(this).css('z-index', '2');
+                                        });
+
+                                        header_height = $(".tableinfo thead[style*='position: fixed']").height();
+
+                                        active_table.prepend(elem_list_clone);
+                                }
+                        }  
+                        
+                $(function() {
+                        merge_headers();
+                        $(".tableinfo").tablesorter({
+                                widgets: ['zebra'],
+                                widgetOptions: {
+                                        zebra: ['even_row', 'odd_row']
+                                }
+                        });
+                        $(window).bind('scroll', load_chunk);
+
+                        $(window).bind('scroll', set_hover_header);
+
+                        $("#csv_block").bind('scroll', move_hover_header);
+                });                                                                                                                                                     
+</script>

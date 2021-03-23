@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<script>
+		var ajaxd_setinterval = null;
+		var ajaxd_interval = 250;
+		var ajaxd_enabled = true;
+
+		$(function() {
+		    $("#send_email").click(function() {
+		    	$('#div_send_email').load("{% url 'reports.views.sendemail' token=token %}");
+		    });
+
+		    $(window).focus(function(){
+			if (ajaxd_enabled){
+			    ajaxd(1);
+			}
+		    });
+
+		    $(window).blur(function(){
+			if (ajaxd_enabled){
+			    clearInterval(ajaxd_setinterval);
+			}
+		    });
+
+		    ajaxd_setinterval = setInterval("ajaxd()", ajaxd_interval);
+		});
+
+		function ajaxd(multiplier) { 
+		  $.ajax({
+		   type: "GET",
+		   url: "{% url 'reports.views.csva' token=token %}",
+		   success: function(msg){
+		     $("#csv_content").html(msg);
+
+		     function ajaxd_disable(){
+			     ajaxd_enabled = false;
+			     clearInterval(ajaxd_setinterval);
+		     }
+
+		     if ($("#csv_content").children("font").attr("color") == "red"){
+			     ajaxd_disable();
+			     $("#div_send_email").html('');
+		     }
+
+		     if (msg.indexOf('<table') >= 0){
+			     ajaxd_disable();
+			     $("#div_send_email").html('');
+		     }
+		     else{
+			multiplier = (typeof multiplier === "undefined") ? 2 : multiplier;
+
+			if (ajaxd_interval < 2000) {
+				ajaxd_interval = ajaxd_interval * multiplier;
+				clearInterval(ajaxd_setinterval);
+				ajaxd_setinterval = setInterval("ajaxd()", ajaxd_interval);
+			}
+		     }
+		   }
+		 });
+		}
+	</script>
+	<div><div id="csv_content"><br/>Запрос обрабатывается.</div><div id="div_send_email"><input id="send_email" type="submit" value="Отправить почтой"/></div></div>
+{% endblock %}

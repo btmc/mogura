@@ -1,0 +1,42 @@
+{% load templates %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mogura{% if title_header %} - {{title_header}} {% elif title %} - {{title}} {% endif %}</title>
+        <link rel="shortcut icon" type="image/x-icon" href="/static/favicon.ico"/>
+        <link rel="stylesheet" type="text/css" href="/static/z/default.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/z/color.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/z/icon.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/z/blocks.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/z/screen.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/z/jquery-ui.css"/>
+    <script type="text/javascript" src="/static/jquery.js"></script>
+    <script type="text/javascript" src="/static/jquery.color-2.1.2.js"></script>
+    <script type="text/javascript" src="/static/jquery.migrate-1.2.1.js"></script>
+    <script type="text/javascript" src="/static/mottie-tablesorter/js/jquery.tablesorter.js"></script>
+        <link rel="stylesheet" type="text/css" href="/static/mottie-tablesorter/css/theme.default.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/style.css"/>
+</head>
+<body class="classic" style="height: 99%;">
+<div id="csv_block" style="padding-left: 5px; padding-top:2px; overflow: auto;">
+{% include "csv_js.html" %}
+<div><div id="csv_content">
+{% if title %}<h3>{% autoescape off %}{{title}}{% endautoescape %}</h3>{% endif %}
+<a style="margin-right:10px" href="{% url 'reports.views.csvd' token=token %}">CSV</a>
+{% if xls %}<a style="margin-right:10px" href="{% url 'reports.views.xlsd' token=token %}">XLSX</a>{% endif %}
+{% if user.id %}<a id="sql_href" style="margin-right:10px" href="javascript:;" onclick="toggle_sql()">SQL</a>{% endif %}
+{% if user.id %}<a id="email_href" style="margin-right:10px" href="javascript:;" onclick="toggle_email()">Email</a>{% endif %}
+<input id="email" type="text" style="margin-right:10px; display: none;" value="{{user.email}}"/>
+<a id="email_send" style="margin-right:10px; display: none;" href="javascript:;" onclick="send_email()">Отправить</a>
+<pre id="email_status" style="display: inline;"></pre>
+<a style="margin-right:10px" target="_blank" href="{% url 'reports.views.csvs' token=token %}")>Mogura</a>
+<div id="sql" style="display: none; background-color:#F2F7FA; line-height: 100%"></div>
+<div id="csv_table">
+{% autoescape off %}
+        {{ content }}
+{% endautoescape %}
+</div>
+</div></div>
+</div>
+</body>
+</html>
